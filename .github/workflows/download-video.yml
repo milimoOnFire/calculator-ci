@@ -1,46 +1,43 @@
-name: Download YouTube Video
+name: React Test Matrix
 
 on:
-  # اجرا با دستور manual
-  workflow_dispatch:
-  # یا اجرا در هر push به main
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  download-video:
-    runs-on: ubuntu-latest
+  test-matrix:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [18, 20]
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
       
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          python-version: '3.11'
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
       
-      - name: Install yt-dlp
-        run: |
-          pip install yt-dlp
+      - name: Install dependencies
+        run: npm ci
       
-      - name: Download YouTube video
-        run: |
-          # دانلود یک ویدیوی کوتاه و کوچک (حدود 10 ثانیه)
-          # این ویدیو یک نمونه Creative Commons است
-          yt-dlp \
-            --format "worst[ext=mp4]" \
-            --output "downloaded_video.mp4" \
-            --max-filesize 10M \
-            "https://www.youtube.com/watch?v=aqz-KE-bpKQ"
-          
-          # نمایش اطلاعات فایل دانلود شده
-          ls -lh downloaded_video.mp4
+      - name: Run tests
+        run: npm test -- --passWithNoTests --watchAll=false
       
-      - name: Upload video as artifact
+      - name: Build project
+        run: npm run build
+      
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: youtube-video
-          path: downloaded_video.mp4
+          name: build-${{ matrix.os }}-node${{ matrix.node-version }}
+          path: build/
           retention-days: 30
 
