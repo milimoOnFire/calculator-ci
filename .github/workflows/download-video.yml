@@ -1,0 +1,46 @@
+name: Download YouTube Video
+
+on:
+  # اجرا با دستور manual
+  workflow_dispatch:
+  # یا اجرا در هر push به main
+  push:
+    branches: [ main ]
+
+jobs:
+  download-video:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install yt-dlp
+        run: |
+          pip install yt-dlp
+      
+      - name: Download YouTube video
+        run: |
+          # دانلود یک ویدیوی کوتاه و کوچک (حدود 10 ثانیه)
+          # این ویدیو یک نمونه Creative Commons است
+          yt-dlp \
+            --format "worst[ext=mp4]" \
+            --output "downloaded_video.mp4" \
+            --max-filesize 10M \
+            "https://www.youtube.com/watch?v=aqz-KE-bpKQ"
+          
+          # نمایش اطلاعات فایل دانلود شده
+          ls -lh downloaded_video.mp4
+      
+      - name: Upload video as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: youtube-video
+          path: downloaded_video.mp4
+          retention-days: 30
+
